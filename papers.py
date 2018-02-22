@@ -537,7 +537,7 @@ def format_title_keywords(title, keywords):
 def cmd_word(args):
 	"""Manage keywords associated with a paper."""
 	def check_opts(x):
-		assert(x), papers.color.fail("Only one action can be specified")
+		assert(x), Color.fail("Only one action can be specified")
 
 	with Papers() as p:
 		if args.list:
