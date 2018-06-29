@@ -225,6 +225,16 @@ class Database(object):
 		Note that if both title and keyword are None, all the papers will match.
 		(This is indeed how Papers.list() is implemented)
 		"""
+		def _match(etitle, ekwds):
+			keyword_match = False
+			title_match = False
+			if keyword is not None:
+				low_keyword = keyword.lower()
+				keyword_match = any(map(lambda x : x.lower().find(low_keyword) != -1,  stored_keywords))
+			if title is not None:
+				title_match = title.lower() in entry.title.lower()
+			return keyword_match or title_match
+
 		try:
 			self.cur.execute('''
 				SELECT * FROM papers
@@ -235,16 +245,9 @@ class Database(object):
 			# Everything will match is nothing has been specified
 			match_all = (title is None and keyword is None)
 			for entry in entries:
-				# default to True is the respective param is None
-				title_match = (title is None)
-				keyword_match = (keyword is None)
 				stored_keywords = self.get_keywords(entry.id)
-				if keyword is not None:
-					low_keyword = keyword.lower()
-					keyword_match = any(map(lambda x : x.lower().find(low_keyword) != -1,  stored_keywords))
-				if title is not None:
-					title_match = title.lower() in entry.title.lower()
-				if match_all or (keyword_match or title_match):
+				did_match = match_all or _match(entry.title, stored_keywords)
+				if did_match:
 					yield entry, stored_keywords
 		except sqlite3.Error as e:
 			self._err("Error retrieving paper list", e)
