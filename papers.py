@@ -203,7 +203,9 @@ class Database(object):
 	def find_paper(self, pid):
 		try:
 			self.cur.execute("SELECT * FROM papers WHERE id = ?", (pid,))
-			return Database.Entry(*self.cur.fetchone())
+			result = self.cur.fetchone()
+			assert(result is not None), Color.fail('Invalid paper identifier')
+			return Database.Entry(*result)
 		except sqlite3.Error as e:
 			self._err("Error retrieving paper", e)
 
