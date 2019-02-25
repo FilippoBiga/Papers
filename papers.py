@@ -391,7 +391,7 @@ class Papers(object):
 		""" Open the subfolder for a given paper """
 		entry = self.db.find_paper(pid)
 		full_path = self.storage.paper_subdir(entry.relpath)
-		os.system('open ' + full_path)
+		os.system('open "{}"'.format(full_path))
 '''
 -------------------------------------------------------------
 -------------------------------------------------------------
