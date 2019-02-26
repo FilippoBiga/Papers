@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from collections import namedtuple
 
+
 class Color(object):
 	FAIL = '\033[91m'
 	STATUS_READ = '\033[38;5;198m'
@@ -16,20 +17,20 @@ class Color(object):
 	STATUS_UNREAD = '\033[38;5;219m'
 	MATCHING = '\033[38;5;120m'
 	_ENDC = '\033[0m'
-	
+
 	@staticmethod
-	def wrap(s,c):
+	def wrap(s, c):
 		""" Wrap s with color c and the terminator """
 		return "{}{}{}".format(c, s, Color._ENDC)
-	
+
 	@staticmethod
 	def fail(s):
 		return Color.wrap(s, Color.FAIL)
-	
+
 	@staticmethod
 	def matching(s):
 		return Color.wrap(s, Color.MATCHING)
-	
+
 	# This respects the case of the occurrence inside the string
 	@staticmethod
 	def highlight_matches(s, match):
@@ -39,18 +40,19 @@ class Color(object):
 			s = s[0:m.start()] + Color.matching(s[m.start():m.end()]) + s[m.end():]
 		return s
 
+
 class Status(object):
 	STATUS_TO_CODE = {
-		'unread'  : 0,
-		'wip'	  : 1,
-		'skimmed' : 2,
-		'read'	  : 3
+		'unread': 0,
+		'wip': 1,
+		'skimmed': 2,
+		'read': 3
 	}
-	CODE_TO_STATUS = { v:k for k,v in STATUS_TO_CODE.items() }
+	CODE_TO_STATUS = {v: k for k, v in STATUS_TO_CODE.items()}
 
 	@staticmethod
 	def max_length():
-		return max(map(lambda x : len(x), Status.STATUS_TO_CODE.keys()))
+		return max(map(lambda x: len(x), Status.STATUS_TO_CODE.keys()))
 
 	def __init__(self, string_or_code):
 		super(Status, self).__init__()
@@ -70,11 +72,12 @@ class Status(object):
 	@property
 	def color(self):
 		return {
-			'unread' : Color.STATUS_UNREAD,
-			'wip'    : Color.STATUS_WIP,
+			'unread': Color.STATUS_UNREAD,
+			'wip': Color.STATUS_WIP,
 			'skimmed': Color.STATUS_SKIMMED,
-			'read'   : Color.STATUS_READ,			
+			'read': Color.STATUS_READ,
 		}[self.string]
+
 
 class Database(object):
 	SCHEMA = '''
@@ -85,18 +88,18 @@ class Database(object):
 			date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
 			status INTEGER DEFAULT 0
 		);
-		
+
 		CREATE TABLE keywords (
 			pid INTEGER REFERENCES papers(id) ON UPDATE CASCADE,
 			word TEXT
 		);
-	
+
 		-- FUTURE: authors management
 		CREATE TABLE authors (
 			pid INTEGER REFERENCES papers(id) ON UPDATE CASCADE,
 			name TEXT
 		);
-	
+
 		-- FUTURE: associations between papers
 		CREATE TABLE links (
 			pid1 INTEGER REFERENCES papers(id),
@@ -177,10 +180,10 @@ class Database(object):
 		""" Retrieve all the keywords associated to a certain paper """
 		try:
 			self.cur.execute('''
-				SELECT word FROM keywords 
+				SELECT word FROM keywords
 				WHERE pid = ?
 			''', (pid,))
-			return list(map(lambda x : x[0], self.cur.fetchall()))
+			return list(map(lambda x: x[0], self.cur.fetchall()))
 		except sqlite3.Error as e:
 			self._err("Error retrieving keywords", e)
 
@@ -188,9 +191,9 @@ class Database(object):
 		""" Insert a paper entry into the database (and possibly the keywords) """
 		try:
 			self.cur.execute('''
-				INSERT INTO papers(title, relpath) 
-				VALUES(?,?)''', 
-				(title, relpath))
+				INSERT INTO papers(title, relpath)
+				VALUES(?,?)''',
+                            (title, relpath))
 			pid = self.last_paper().id
 			for kword in keywords:
 				self.add_keyword(kword, pid)
@@ -232,7 +235,7 @@ class Database(object):
 			title_match = False
 			if keyword is not None:
 				low_keyword = keyword.lower()
-				keyword_match = any(map(lambda x : x.lower().find(low_keyword) != -1,  stored_keywords))
+				keyword_match = any(map(lambda x: x.lower().find(low_keyword) != -1, stored_keywords))
 			if title is not None:
 				title_match = title.lower() in entry.title.lower()
 			return keyword_match or title_match
@@ -243,7 +246,7 @@ class Database(object):
 				ORDER BY date_added DESC
 			''')
 			# Construct entries
-			entries = map(lambda x : Database.Entry(*x), self.cur.fetchall())
+			entries = map(lambda x: Database.Entry(*x), self.cur.fetchall())
 			# Everything will match is nothing has been specified
 			match_all = (title is None and keyword is None)
 			for entry in entries:
@@ -289,7 +292,7 @@ class Storage(object):
 
 	def add(self, file, title):
 		""" Import a paper (create subdir, copy file, create notes.txt) """
-		normalized_title = title.replace(' ','_').lower()
+		normalized_title = title.replace(' ', '_').lower()
 		paper_dir = self.paper_subdir(normalized_title)
 		assert(not os.path.exists(paper_dir)), \
 			Color.fail('{} already exists'.format(paper_dir))
@@ -302,6 +305,7 @@ class Storage(object):
 		full_path = os.path.join(self.directory, relpath)
 		assert(os.path.isdir(full_path)), Color.fail('{} does not exist'.format(full_path))
 		shutil.rmtree(full_path)
+
 
 class Papers(object):
 	ENV_VAR = 'PAPERS_DIR'
@@ -328,9 +332,9 @@ class Papers(object):
 	def __exit__(self, exc_type, exc_val, exc_tb):
 		self.db.close()
 
-	def subpath(self,p):
+	def subpath(self, p):
 		return os.path.join(self.base_dir, p)
-		
+
 	def add(self, file, title, keywords):
 		""" Add a paper """
 		assert(os.path.exists(file)), Color.fail('{} does not exist'.format(file))
@@ -392,6 +396,8 @@ class Papers(object):
 		entry = self.db.find_paper(pid)
 		full_path = self.storage.paper_subdir(entry.relpath)
 		os.system('open "{}"'.format(full_path))
+
+
 '''
 -------------------------------------------------------------
 -------------------------------------------------------------
@@ -422,14 +428,16 @@ Search and display the papers with a certain keyword associated to them:
 subparsers = parser.add_subparsers(description=None, dest="subcommand")
 subparsers.required = True
 
+
 # Credit: https://gist.github.com/mivade/384c2c41c3a29c637cb6c603d4197f9f
 def arg(*name_or_flags, **kwargs):
 	return ([*name_or_flags], kwargs)
 
+
 # decorator for sub commands
 def subcommand(args=[], parent=subparsers):
 	def decorator(func):
-		name = func.__name__.replace('cmd_','')
+		name = func.__name__.replace('cmd_', '')
 		parser = parent.add_parser(name, help=func.__doc__)
 		for arg in args:
 			parser.add_argument(*arg[0], **arg[1])
@@ -445,9 +453,9 @@ def cmd_init(args):
 
 
 @subcommand([
-	arg('-f','--file', required=True, help="The file you want to import."),
-	arg('-t','--title', required=True, help="The title of the paper being imported."),
-	arg('-k','--keywords', help='Comma-separated list of keywords')
+	arg('-f', '--file', required=True, help="The file you want to import."),
+	arg('-t', '--title', required=True, help="The title of the paper being imported."),
+	arg('-k', '--keywords', help='Comma-separated list of keywords')
 ])
 def cmd_import(args):
 	"""Import a new paper."""
@@ -460,7 +468,7 @@ def cmd_import(args):
 
 
 @subcommand([
-	arg('-p','--paper_id', required=True, help="The identifier of the paper to delete.")
+	arg('-p', '--paper_id', required=True, help="The identifier of the paper to delete.")
 ])
 def cmd_delete(args):
 	"""Delete a paper and all the data related to it."""
@@ -468,8 +476,9 @@ def cmd_delete(args):
 		p.delete(args.paper_id)
 		print("Removed {}".format(args.paper_id))
 
+
 # returns a formatted representation of a paper
-# (on a single line) 
+# (on a single line)
 def format_entry(p, status=False, date=False):
 	sp = " " * 4
 	elements = []
@@ -490,10 +499,10 @@ def format_entry(p, status=False, date=False):
 
 
 @subcommand([
-	arg('-s', '--show-status', required=False, 
-		action='store_true', help="Show status of each paper."),
-	arg('-d', '--show-date', required=False, 
-		action='store_true', help="Show date of each paper.")
+	arg('-s', '--show-status', required=False,
+            action='store_true', help="Show status of each paper."),
+	arg('-d', '--show-date', required=False,
+            action='store_true', help="Show date of each paper.")
 ])
 def cmd_list(args):
 	"""List papers."""
@@ -503,10 +512,10 @@ def cmd_list(args):
 
 
 @subcommand([
-	arg('-s', '--show-status', required=False, 
-		action='store_true', help="Show status of the paper."),
-	arg('-d', '--show-date', required=False, 
-		action='store_true', help="Show date of the paper.")
+	arg('-s', '--show-status', required=False,
+            action='store_true', help="Show status of the paper."),
+	arg('-d', '--show-date', required=False,
+            action='store_true', help="Show date of the paper.")
 ])
 def cmd_last(args):
 	"""Retrieve the last added paper."""
@@ -515,9 +524,9 @@ def cmd_last(args):
 
 
 @subcommand([
-	arg('-s', '--status', required=True, choices=[ 'unread', 'wip', 'skimmed', 'read' ], 
-		help="Read status of the paper."),
-	arg('-p','--paper_id', required=True, help="The identifier of the paper to update.")
+	arg('-s', '--status', required=True, choices=['unread', 'wip', 'skimmed', 'read'],
+            help="Read status of the paper."),
+	arg('-p', '--paper_id', required=True, help="The identifier of the paper to update.")
 ])
 def cmd_mark(args):
 	"""Set the status of a paper."""
@@ -534,10 +543,10 @@ def format_title_keywords(title, keywords):
 
 
 @subcommand([
-	arg('-a','--add', help='Associate a keyword to a paper.'),
-	arg('-r','--remove', help='Remove a keyword from a paper.'),
-	arg('-l','--list', action='store_true', help='List all the keywords associated to a paper.'),
-	arg('-p','--paper_id', required=True, help="The identifier of the paper to update.")
+	arg('-a', '--add', help='Associate a keyword to a paper.'),
+	arg('-r', '--remove', help='Remove a keyword from a paper.'),
+	arg('-l', '--list', action='store_true', help='List all the keywords associated to a paper.'),
+	arg('-p', '--paper_id', required=True, help="The identifier of the paper to update.")
 ])
 def cmd_word(args):
 	"""Manage keywords associated with a paper."""
@@ -566,14 +575,14 @@ def cmd_search(args):
 		for paper, keywords in p.filter(args.title, args.keyword):
 			title = paper.title
 			if args.keyword is not None:
-				keywords = map(lambda x : Color.highlight_matches(x, args.keyword), keywords)
+				keywords = map(lambda x: Color.highlight_matches(x, args.keyword), keywords)
 			if args.title is not None:
 				title = Color.highlight_matches(title, args.title)
 			print(format_title_keywords(title, keywords) + '\n')
 
 
 @subcommand([
-	arg('-p','--paper_id', required=True, help="The identifier of the paper to open.")
+	arg('-p', '--paper_id', required=True, help="The identifier of the paper to open.")
 ])
 def cmd_open(args):
 	"""Open the directory containing the given paper."""
