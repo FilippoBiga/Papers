@@ -193,7 +193,7 @@ class Database(object):
 			self.cur.execute('''
 				INSERT INTO papers(title, relpath)
 				VALUES(?,?)''',
-                            (title, relpath))
+							(title, relpath))
 			pid = self.last_paper().id
 			for kword in keywords:
 				self.add_keyword(kword, pid)
@@ -500,9 +500,9 @@ def format_entry(p, status=False, date=False):
 
 @subcommand([
 	arg('-s', '--show-status', required=False,
-            action='store_true', help="Show status of each paper."),
+			action='store_true', help="Show status of each paper."),
 	arg('-d', '--show-date', required=False,
-            action='store_true', help="Show date of each paper.")
+			action='store_true', help="Show date of each paper.")
 ])
 def cmd_list(args):
 	"""List papers."""
@@ -513,9 +513,9 @@ def cmd_list(args):
 
 @subcommand([
 	arg('-s', '--show-status', required=False,
-            action='store_true', help="Show status of the paper."),
+			action='store_true', help="Show status of the paper."),
 	arg('-d', '--show-date', required=False,
-            action='store_true', help="Show date of the paper.")
+			action='store_true', help="Show date of the paper.")
 ])
 def cmd_last(args):
 	"""Retrieve the last added paper."""
@@ -525,7 +525,7 @@ def cmd_last(args):
 
 @subcommand([
 	arg('-s', '--status', required=True, choices=['unread', 'wip', 'skimmed', 'read'],
-            help="Read status of the paper."),
+			help="Read status of the paper."),
 	arg('-p', '--paper_id', required=True, help="The identifier of the paper to update.")
 ])
 def cmd_mark(args):
